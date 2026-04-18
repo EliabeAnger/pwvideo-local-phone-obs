@@ -1,0 +1,21 @@
+{
+  "name": "pwvd",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local phone-camera to OBS streamer. Browser-based capture, WHIP ingest, WHEP/RTSP out. Video-only, low-latency, max-quality.",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "certs": "node scripts/make-certs.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@fastify/static": "^7.0.4",
+    "fastify": "^4.28.1",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0"
+  }
+}

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta name="theme-color" content="#000" />
+<title>PWVD — Captura</title>
+<link rel="stylesheet" href="./style.css" />
+</head>
+<body class="phone">
+  <div class="preview-stage">
+    <video id="preview" autoplay muted playsinline></video>
+    <svg id="grid" class="grid-overlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <line x1="33.33" y1="0" x2="33.33" y2="100" />
+      <line x1="66.66" y1="0" x2="66.66" y2="100" />
+      <line x1="0" y1="33.33" x2="100" y2="33.33" />
+      <line x1="0" y1="66.66" x2="100" y2="66.66" />
+      <circle cx="50" cy="50" r="0.6" class="center" />
+    </svg>
+    <button id="gridToggle" class="grid-toggle" title="Alternar grade">⊞</button>
+  </div>
+
+  <div id="panel" class="panel">
+    <div class="row">
+      <button id="startBtn" class="primary">Iniciar captura</button>
+      <button id="stopBtn" disabled>Parar</button>
+    </div>
+
+    <details open>
+      <summary>Ajustes</summary>
+      <label>Nome do stream (único por celular)
+        <input id="streamName" type="text" autocomplete="off" />
+      </label>
+      <label>Câmera
+        <select id="camSel"></select>
+      </label>
+      <label>Orientação
+        <select id="orientSel">
+          <option value="0">Automática / 0°</option>
+          <option value="90">Girar 90° (horário)</option>
+          <option value="180">Girar 180°</option>
+          <option value="270">Girar 270° (anti-horário)</option>
+          <option value="mirror">Espelhar horizontalmente</option>
+        </select>
+      </label>
+      <label>Resolução
+        <select id="resSel"></select>
+      </label>
+      <label>FPS
+        <select id="fpsSel"></select>
+      </label>
+      <label>Bitrate alvo: <span id="brLabel">—</span>
+        <input id="brRange" type="range" min="500" max="50000" step="500" value="10000" />
+      </label>
+      <label>Codec preferido
+        <select id="codecSel">
+          <option value="h264">H.264 (recomendado para OBS)</option>
+          <option value="vp9">VP9</option>
+          <option value="av1">AV1</option>
+          <option value="vp8">VP8</option>
+        </select>
+      </label>
+      <label>Preset
+        <select id="presetSel">
+          <option value="balanced">Balanceado (qualidade + FPS estável)</option>
+          <option value="fps">FPS estável (prioriza framerate)</option>
+          <option value="res">Resolução máxima (pode derrubar FPS)</option>
+          <option value="low">Latência mínima</option>
+        </select>
+      </label>
+      <label>Conteúdo
+        <select id="hintSel">
+          <option value="detail">Detalhe (estático)</option>
+          <option value="motion">Movimento (ação)</option>
+        </select>
+      </label>
+    </details>
+
+    <div id="stats" class="stats"></div>
+    <div id="msg" class="msg"></div>
+  </div>
+
+  <script type="module" src="./phone.js"></script>
+</body>
+</html>

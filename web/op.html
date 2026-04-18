@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>PWVD — Operador</title>
+<link rel="stylesheet" href="./style.css" />
+</head>
+<body class="op">
+  <div class="op-wrap">
+    <h1>PWVD — Painel do operador</h1>
+    <p id="lan" style="color:#9a9ab0"></p>
+
+    <h2>Servidor <span id="liveDot" class="live-dot" title="Tempo real"></span></h2>
+    <div class="card">
+      <div class="grid" id="serverGrid"></div>
+    </div>
+
+    <h2>Link para o celular</h2>
+    <div class="card phone-share">
+      <div class="phone-share-row">
+        <img id="qrImg" alt="QR code" />
+        <div class="phone-share-info">
+          <div class="url"><code id="phoneUrl">…</code><button data-copy="phoneUrl">Copiar</button></div>
+          <div class="phone-share-btns">
+            <a id="phoneOpen" class="btn" target="_blank" rel="noopener">Abrir no navegador</a>
+            <button id="shareBtn" class="btn">Compartilhar…</button>
+          </div>
+          <p class="hint">
+            O celular precisa estar na mesma Wi-Fi do PC. Se aparecer aviso de certificado, instale o
+            <code>rootCA.pem</code> do mkcert (rode <code>mkcert -CAROOT</code> no PC para achar o arquivo)
+            ou toque em “Avançado → Continuar”.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <h2>Dispositivos em transmissão <span id="pubCount" class="count">0</span></h2>
+    <div id="publishersList" class="publishers-list">
+      <p class="empty">Nenhum celular transmitindo agora.</p>
+    </div>
+
+    <h2>Dispositivos no painel <span id="viewerCount" class="count">0</span></h2>
+    <div class="card">
+      <table id="devicesTable" class="devices">
+        <thead><tr>
+          <th>Dispositivo</th><th>Navegador</th><th>IP</th><th>Papel</th><th>Visto há</th>
+        </tr></thead>
+        <tbody><tr><td colspan="5" class="empty">Aguardando conexões…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module" src="./op.js"></script>
+</body>
+</html>

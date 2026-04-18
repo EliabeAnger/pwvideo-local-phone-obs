@@ -1,0 +1,58 @@
+# MediaMTX config for PWVD
+# Video-only, low-latency, local-LAN streaming.
+# Ingest: WHIP (from phone browser).  Egress: WHEP, RTSP, RTMP (for OBS).
+
+logLevel: info
+logDestinations: [stdout]
+
+# Read/write timeouts kept tight for low latency
+readTimeout: 10s
+writeTimeout: 10s
+writeQueueSize: 512
+
+# ----- API (used by the Node control plane to query active paths) -----
+api: yes
+apiAddress: 127.0.0.1:9997
+
+# ----- RTSP (OBS Media Source fallback) -----
+rtsp: yes
+rtspAddress: :8554
+protocols: [tcp, udp]
+rtspAuthMethods: [basic]
+
+# ----- RTMP (extra fallback) -----
+rtmp: yes
+rtmpAddress: :1935
+
+# ----- HLS disabled (adds latency) -----
+hls: no
+
+# ----- WebRTC (WHIP in + WHEP out) — the primary, lowest-latency path -----
+webrtc: yes
+webrtcAddress: :8889
+webrtcEncryption: no            # set to yes and provide certs when exposing beyond LAN
+webrtcAllowOrigin: '*'
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: :8189
+# Do NOT auto-pick every NIC (Radmin VPN would hijack ICE). The Node control plane
+# rewrites this list at startup to the real LAN IP.
+webrtcIPsFromInterfaces: no
+webrtcAdditionalHosts: [192.168.2.140]
+webrtcICEServers2: []           # LAN-only: no STUN/TURN by default
+
+# ----- Paths -----
+paths:
+  live:
+    # Allow anyone on the LAN to publish/read. Tighten with publishUser/readUser for shared networks.
+    source: publisher
+    sourceOnDemand: no
+    # Hardware acceleration hooks (enabled when present on host)
+    # FFmpeg is only used for optional recording/transcode; NOT on the hot path.
+    runOnInit: ""
+    runOnDemand: ""
+
+  # Catch-all: any other path name (cam-xxx, palco, etc.) is accepted dynamically.
+  # Each phone picks its own stream name in the UI.
+  "~^.*$":
+    source: publisher
+    sourceOnDemand: no
