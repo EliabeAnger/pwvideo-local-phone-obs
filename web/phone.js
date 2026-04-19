@@ -469,7 +469,12 @@ async function stop() {
   setMsg('Parado.');
 }
 
-startBtn.addEventListener('click', start);
+startBtn.addEventListener('click', () => {
+  start().catch(e => {
+    const dbg = document.getElementById('dbg');
+    if (dbg) dbg.textContent += 'START-ERR: ' + (e.stack || e.message || e) + '\n';
+  });
+});
 stopBtn.addEventListener('click', stop);
 
 // ---- stats -----------------------------------------------------------------
@@ -588,6 +593,8 @@ function setupCameraControls(track) {
 
 // ---- init ------------------------------------------------------------------
 (async () => {
+  const dbg = document.getElementById('dbg');
+  const log = (s) => { if (dbg) dbg.textContent += s + '\n'; };
   if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) {
     setMsg('Este navegador não suporta WebRTC / getUserMedia.', true);
     startBtn.disabled = true; return;
@@ -597,20 +604,20 @@ function setupCameraControls(track) {
     startBtn.disabled = true; return;
   }
   try {
+    log('init: loadConfig…');
     await loadConfig();
     loadSettings();
-    // Try to probe capabilities. On iOS Safari this will fail without a user
-    // gesture, but probeCapabilities() now handles the error gracefully and
-    // populates default resolutions (up to 1080p).
+    log('init: enumerate…');
     await enumerateCameras();
+    log('init: probe…');
     await probeCapabilities();
     await enumerateCameras(camSel.value);
     applyOrientation();
+    log('init: OK');
     setMsg('Pronto. Toque em "Iniciar captura".');
   } catch (e) {
-    // Even if probe fails entirely, the page is still usable — the start
-    // button re-probes inside the user gesture.
     console.warn('[pwvd] init error (non-fatal):', e);
+    log('init-err: ' + (e.stack || e.message || e));
     setMsg('Pronto. Toque em "Iniciar captura".');
   }
 })();

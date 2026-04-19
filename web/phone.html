@@ -95,9 +95,10 @@
 
   <!-- Inline error catcher (runs before module, catches silent failures on iOS) -->
   <script>
-    window.onerror=function(m,s,l){document.getElementById('dbg').textContent+='ERR: '+m+' ('+s+':'+l+')\n';};
-    window.addEventListener('unhandledrejection',function(e){document.getElementById('dbg').textContent+='REJ: '+(e.reason?.message||e.reason)+'\n';});
+    var _dbg=document.getElementById('dbg');
+    window.onerror=function(m,s,l,c,e){_dbg.textContent+='ERR: '+(e&&e.message||m)+' @ '+(s||'?')+':'+l+':'+c+'\n';};
+    window.addEventListener('unhandledrejection',function(ev){_dbg.textContent+='REJ: '+(ev.reason&&ev.reason.stack||ev.reason&&ev.reason.message||ev.reason)+'\n';});
   </script>
-  <script type="module" src="./phone.js"></script>
+  <script type="module" crossorigin src="./phone.js"></script>
 </body>
 </html>
