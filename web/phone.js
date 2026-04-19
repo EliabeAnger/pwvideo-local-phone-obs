@@ -170,15 +170,24 @@ function applyOrientation() {
 }
 
 // ---- capability probe: open a permissive stream, read capabilities, then close -----
+// On iOS Safari, getUserMedia requires a user gesture. When called without one
+// (e.g. during page init), it throws NotAllowedError.  In that case we fall back
+// to a sensible default list so the UI is still usable.
 async function probeCapabilities() {
-  const probe = await navigator.mediaDevices.getUserMedia({
-    audio: false,
-    video: buildVideoConstraints()
-  });
-  const track = probe.getVideoTracks()[0];
-  const caps = track.getCapabilities ? track.getCapabilities() : {};
-  const settings = track.getSettings ? track.getSettings() : {};
-  probe.getTracks().forEach(t => t.stop());
+  let caps = {}, settings = {};
+  try {
+    const probe = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: buildVideoConstraints()
+    });
+    const track = probe.getVideoTracks()[0];
+    caps = (typeof track.getCapabilities === 'function') ? track.getCapabilities() : {};
+    settings = (typeof track.getSettings === 'function') ? track.getSettings() : {};
+    probe.getTracks().forEach(t => t.stop());
+  } catch (e) {
+    // iOS Safari blocks getUserMedia without user gesture – use defaults
+    console.warn('[pwvd] probeCapabilities failed (expected on iOS first load):', e.name);
+  }
 
   // Capabilities.width/height represent the SHORT and LONG edges of the sensor.
   // Use the long edge so portrait mode still offers 1080p/4K.
@@ -291,6 +300,14 @@ async function start() {
     autoReconnect = false;
     setMsg('Solicitando câmera…');
 
+    // On iOS Safari the initial probe (page load) may have failed because
+    // getUserMedia requires a user gesture. Now we ARE inside a gesture, so
+    // re-probe to get real capabilities and repopulate selectors.
+    if (resSel.options.length <= 1) {
+      await probeCapabilities();
+      await enumerateCameras(camSel.value);
+    }
+
     const [w, h] = resSel.value.split('x').map(Number);
     const fps = parseInt(fpsSel.value, 10);
 
@@ -302,8 +319,9 @@ async function start() {
     applyOrientation();
 
     const track = stream.getVideoTracks()[0];
-    track.contentHint = hintSel.value;
-    const st = track.getSettings?.() || {};
+    // contentHint not available on Safari
+    if ('contentHint' in track) track.contentHint = hintSel.value;
+    const st = (typeof track.getSettings === 'function') ? track.getSettings() : {};
     if (st.width && st.height) {
       setMsg(`Câmera: ${st.width}×${st.height} @ ${Math.round(st.frameRate||0)}fps`);
     }
@@ -355,13 +373,13 @@ async function connect() {
     res:     'maintain-resolution',
     low:     'maintain-framerate',
   }[preset] || 'balanced';
-  p.degradationPreference = degradation;
+  // degradationPreference not supported on Safari — guard it
+  try { p.degradationPreference = degradation; } catch {}
   p.encodings = [{
     maxBitrate: bitrate,
     maxFramerate: fps,
     priority: 'high',
     networkPriority: 'high',
-    scaleResolutionDownBy: 1,
   }];
   await sender.setParameters(p);
 
@@ -514,13 +532,15 @@ for (const el of [codecSel, presetSel, hintSel, orientSel, camSel, abrCheck]) {
 brRange.addEventListener('input', saveSettings);
 
 // ---- camera hardware controls (torch, zoom, exposure) ----------------------
+// Safari does not support getCapabilities() or applyConstraints({advanced}).
+// All control setup is guarded so iOS doesn't crash.
 function setupCameraControls(track) {
-  const caps = track.getCapabilities ? track.getCapabilities() : {};
+  const caps = (typeof track.getCapabilities === 'function') ? track.getCapabilities() : {};
   // Torch
   if (caps.torch) {
     torchCheck.disabled = false;
     torchCheck.addEventListener('change', () => {
-      track.applyConstraints({ advanced: [{ torch: torchCheck.checked }] }).catch(() => {});
+      try { track.applyConstraints({ advanced: [{ torch: torchCheck.checked }] }); } catch {}
     });
   } else {
     torchCheck.disabled = true; torchCheck.checked = false;
@@ -531,12 +551,13 @@ function setupCameraControls(track) {
     zoomRange.min = Math.round(caps.zoom.min * 100);
     zoomRange.max = Math.round(caps.zoom.max * 100);
     zoomRange.step = Math.round(caps.zoom.step * 100) || 10;
-    zoomRange.value = Math.round((track.getSettings().zoom || caps.zoom.min) * 100);
+    const curZoom = (typeof track.getSettings === 'function') ? (track.getSettings().zoom || caps.zoom.min) : caps.zoom.min;
+    zoomRange.value = Math.round(curZoom * 100);
     zoomLabel.textContent = `${(zoomRange.value / 100).toFixed(1)}x`;
     zoomRange.addEventListener('input', () => {
       const z = zoomRange.value / 100;
       zoomLabel.textContent = `${z.toFixed(1)}x`;
-      track.applyConstraints({ advanced: [{ zoom: z }] }).catch(() => {});
+      try { track.applyConstraints({ advanced: [{ zoom: z }] }); } catch {}
     });
   } else {
     zoomRange.disabled = true; zoomLabel.textContent = 'N/A';
@@ -549,7 +570,8 @@ function setupCameraControls(track) {
     expRange.min = Math.round(min * 10);
     expRange.max = Math.round(max * 10);
     expRange.step = Math.round((caps.exposureCompensation.step || 0.1) * 10) || 1;
-    expRange.value = Math.round(((track.getSettings().exposureCompensation || 0)) * 10);
+    const curExp = (typeof track.getSettings === 'function') ? (track.getSettings().exposureCompensation || 0) : 0;
+    expRange.value = Math.round(curExp * 10);
     const updateExpLabel = () => {
       const v = expRange.value / 10;
       expLabel.textContent = v === 0 ? 'Auto' : (v > 0 ? `+${v.toFixed(1)}` : v.toFixed(1));
@@ -557,7 +579,7 @@ function setupCameraControls(track) {
     updateExpLabel();
     expRange.addEventListener('input', () => {
       updateExpLabel();
-      track.applyConstraints({ advanced: [{ exposureCompensation: expRange.value / 10 }] }).catch(() => {});
+      try { track.applyConstraints({ advanced: [{ exposureCompensation: expRange.value / 10 }] }); } catch {}
     });
   } else {
     expRange.disabled = true; expLabel.textContent = 'N/A';
@@ -577,14 +599,19 @@ function setupCameraControls(track) {
   try {
     await loadConfig();
     loadSettings();
-    // First probe (no labels yet), then ask permission, then re-enumerate to get labels.
+    // Try to probe capabilities. On iOS Safari this will fail without a user
+    // gesture, but probeCapabilities() now handles the error gracefully and
+    // populates default resolutions (up to 1080p).
     await enumerateCameras();
     await probeCapabilities();
     await enumerateCameras(camSel.value);
     applyOrientation();
     setMsg('Pronto. Toque em "Iniciar captura".');
   } catch (e) {
-    setMsg(e.message || String(e), true);
+    // Even if probe fails entirely, the page is still usable — the start
+    // button re-probes inside the user gesture.
+    console.warn('[pwvd] init error (non-fatal):', e);
+    setMsg('Pronto. Toque em "Iniciar captura".');
   }
 })();
 
