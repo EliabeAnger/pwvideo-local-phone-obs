@@ -233,9 +233,10 @@ function createPublisherCard(name, transport) {
     </div>
     <div class="pub-body">
       <div class="pub-meta" data-role="meta">—</div>
-      <div class="url obs-url"><code>${escapeHtml(obsUrl)}</code><button data-copy-val="${escapeHtml(obsUrl)}">OBS Browser (WHEP)</button></div>
-      <div class="url"><code>${escapeHtml(rtspL)}</code><button data-copy-val="${escapeHtml(rtspL)}">RTSP (local)</button></div>
+      <div class="h265-warn" data-role="h265warn" style="display:none;background:#4a3000;color:#f0c040;padding:6px 10px;border-radius:6px;margin:4px 0;font-size:13px">⚠ Codec H265 — use RTSP no OBS (Media Source). WHEP/Browser Source não suporta H265.</div>
+      <div class="url" data-role="rtsp-local"><code>${escapeHtml(rtspL)}</code><button data-copy-val="${escapeHtml(rtspL)}">RTSP (local) — OBS Media Source</button></div>
       <div class="url"><code>${escapeHtml(rtsp)}</code><button data-copy-val="${escapeHtml(rtsp)}">RTSP (LAN)</button></div>
+      <div class="url obs-url" data-role="obs-url"><code>${escapeHtml(obsUrl)}</code><button data-copy-val="${escapeHtml(obsUrl)}">OBS Browser (WHEP)</button></div>
       <div class="url"><code>${escapeHtml(whepL)}</code><button data-copy-val="${escapeHtml(whepL)}">WHEP (local)</button></div>
       <div class="url"><code>${escapeHtml(whep)}</code><button data-copy-val="${escapeHtml(whep)}">WHEP (LAN)</button></div>
       <div class="pub-server-stats" data-role="server-stats">
@@ -340,6 +341,13 @@ function updateCardMeta(card, pub, pathInfo) {
       bs[3].textContent = pathInfo.readers ?? '—';
       bs[4].textContent = fmtBytes(bytes);
       bs[5].textContent = fmtAgo(pub.created);
+
+      // H265 warning: WHEP/Browser Source can't decode H265
+      const isH265 = codecs.toUpperCase().includes('H265');
+      const warn = card.root.querySelector('[data-role="h265warn"]');
+      const obsUrl = card.root.querySelector('[data-role="obs-url"]');
+      if (warn) warn.style.display = isH265 ? '' : 'none';
+      if (obsUrl) obsUrl.style.opacity = isH265 ? '0.4' : '1';
     }
   }
 }
