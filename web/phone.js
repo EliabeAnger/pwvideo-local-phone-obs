@@ -61,6 +61,8 @@ let wakeLockSentinel = null;
 let abrEnabled = false;
 let configuredBitrate = 0;
 let minBitrate = 0;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 30;
 
 async function loadConfig() {
   const r = await fetch('/api/config');
@@ -349,6 +351,8 @@ async function start() {
 async function connect() {
   const dbg = document.getElementById('dbg');
   const log = (s) => { if (dbg) dbg.textContent += s + '\n'; };
+  // Fix #5: always clear any previous interval before creating a new connection
+  if (card_bitrateTimer) { clearInterval(card_bitrateTimer); card_bitrateTimer = null; }
   const track = stream?.getVideoTracks()[0];
   if (!track || track.readyState === 'ended') throw new Error('Câmera indisponível');
   log('connect: track OK (' + track.readyState + ')');
@@ -462,22 +466,34 @@ function cleanup() {
 
 function scheduleReconnect() {
   cleanup();
+  if (!autoReconnect) return;
   if (reconnectTimer) clearTimeout(reconnectTimer);
+  // Fix #9: cap reconnect attempts to avoid battery drain / log spam
+  if (++reconnectAttempts > MAX_RECONNECT_ATTEMPTS) {
+    autoReconnect = false;
+    setMsg(`Servidor indisponível após ${MAX_RECONNECT_ATTEMPTS} tentativas. Toque em Iniciar novamente.`, true);
+    return;
+  }
+  // Exponential backoff: 2s, 3s, 4.5s, ... capped at 15s
+  const delay = Math.min(2000 * Math.pow(1.5, Math.min(reconnectAttempts - 1, 8)), 15000);
+  setMsg(`Reconectando em ${Math.round(delay/1000)}s (tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})…`, true);
   reconnectTimer = setTimeout(async () => {
     reconnectTimer = null;
     if (!autoReconnect || !stream) return;
     try {
       await connect();
+      reconnectAttempts = 0; // reset on success
     } catch (e) {
       console.warn('[pwvd] reconnect failed:', e);
-      setMsg('Falha ao reconectar. Tentando…', true);
       if (autoReconnect) scheduleReconnect();
     }
-  }, 2000);
+  }, delay);
 }
 
 async function stop() {
+  // Fix #3: set flag FIRST so any pending reconnect callback aborts immediately
   autoReconnect = false;
+  reconnectAttempts = 0;
   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
   stopBtn.disabled = true;
   cleanup();

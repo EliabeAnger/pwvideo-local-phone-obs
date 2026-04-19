@@ -310,10 +310,32 @@ async function proxyTo(req, reply, target) {
     headers['content-length'] = String(body.length);
   }
 
-  const upstream = await fetch(target, { method: req.method, headers, body });
+  // Fix #1: wrap in try/catch with timeout — MediaMTX downtime must not hang the phone
+  const controller = new AbortController();
+  const to = setTimeout(() => controller.abort(), 8000);
+  let upstream;
+  try {
+    upstream = await fetch(target, { method: req.method, headers, body, signal: controller.signal });
+  } catch (e) {
+    clearTimeout(to);
+    reply.code(502).send({ error: 'Servidor de mídia indisponível', detail: e.message });
+    return;
+  }
+  clearTimeout(to);
+
   reply.status(upstream.status);
   upstream.headers.forEach((v, k) => {
     if (k === 'transfer-encoding' || k === 'connection') return;
+    // Fix #7: rewrite Location header so WHIP DELETE works through our proxy
+    if (k === 'location' && v) {
+      try {
+        // MediaMTX returns absolute URL (http://127.0.0.1:8889/...). Rewrite to our public path.
+        const u = new URL(v, target);
+        // Strip the upstream host — client talks to US, not to MediaMTX directly
+        reply.header('location', u.pathname + u.search);
+        return;
+      } catch { /* fall through */ }
+    }
     reply.header(k, v);
   });
   const buf = Buffer.from(await upstream.arrayBuffer());

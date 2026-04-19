@@ -32,14 +32,17 @@ async function mtx(path) {
 }
 
 export async function getStatus({ maxCpuPercent }) {
-  const [paths, whipSess, whepSess, rtspSess, rtspConns, rtmpConns] = await Promise.all([
+  // Fix #13: allSettled — partial data is better than blank dashboard during transient failures
+  const results = await Promise.allSettled([
     mtx('/v3/paths/list'),
     mtx('/v3/webrtcsessions/list'),
-    mtx('/v3/webrtcsessions/list'), // same endpoint, filtered below
+    mtx('/v3/webrtcsessions/list'),
     mtx('/v3/rtspsessions/list'),
     mtx('/v3/rtspconns/list'),
     mtx('/v3/rtmpconns/list'),
   ]);
+  const [paths, whipSess, whepSess, rtspSess, rtspConns, rtmpConns] =
+    results.map(r => r.status === 'fulfilled' ? r.value : null);
 
   const mem = { total: totalmem(), free: freemem() };
   const cpuPct = cpuPercent();
