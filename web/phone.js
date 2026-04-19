@@ -21,6 +21,12 @@ const msgEl = $('msg');
 const gridEl = $('grid');
 const previewStage = document.querySelector('.preview-stage');
 const gridToggle = $('gridToggle');
+const abrCheck = $('abrCheck');
+const torchCheck = $('torchCheck');
+const zoomRange = $('zoomRange');
+const zoomLabel = $('zoomLabel');
+const expRange = $('expRange');
+const expLabel = $('expLabel');
 
 // Grid overlay is preview-only. Persist user preference.
 (function initGrid() {
@@ -52,6 +58,9 @@ let card_bitrateTarget = 0;
 let autoReconnect = false;
 let reconnectTimer = null;
 let wakeLockSentinel = null;
+let abrEnabled = false;
+let configuredBitrate = 0;
+let minBitrate = 0;
 
 async function loadConfig() {
   const r = await fetch('/api/config');
@@ -298,8 +307,10 @@ async function start() {
     if (st.width && st.height) {
       setMsg(`Câmera: ${st.width}×${st.height} @ ${Math.round(st.frameRate||0)}fps`);
     }
+    setupCameraControls(track);
 
     autoReconnect = true;
+    saveSettings();
     await connect();
     await acquireWakeLock();
   } catch (e) {
@@ -376,6 +387,9 @@ async function connect() {
   startStats();
 
   card_bitrateTarget = bitrate;
+  configuredBitrate = bitrate;
+  minBitrate = Math.round(bitrate * 0.70);
+  abrEnabled = abrCheck.checked;
   card_bitrateTimer = setInterval(async () => {
     if (!pc || pc.connectionState === 'closed') return;
     try {
@@ -383,7 +397,14 @@ async function connect() {
       for (const s of senders) {
         const p = s.getParameters();
         if (p.encodings?.[0]) {
-          p.encodings[0].maxBitrate = card_bitrateTarget;
+          if (abrEnabled) {
+            // ABR: let browser reduce but keep floor at 70% of configured
+            const cur = p.encodings[0].maxBitrate || card_bitrateTarget;
+            // Re-apply target so browser can negotiate up/down within bounds
+            p.encodings[0].maxBitrate = card_bitrateTarget;
+          } else {
+            p.encodings[0].maxBitrate = card_bitrateTarget;
+          }
           await s.setParameters(p);
         }
       }
@@ -423,6 +444,9 @@ async function stop() {
   if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
   preview.srcObject = null;
   releaseWakeLock();
+  torchCheck.disabled = true; torchCheck.checked = false;
+  zoomRange.disabled = true; zoomLabel.textContent = '1.0x';
+  expRange.disabled = true; expLabel.textContent = 'Auto';
   startBtn.disabled = false;
   setMsg('Parado.');
 }
@@ -450,14 +474,95 @@ function startStats() {
     const encMs = out.framesEncoded ? Math.round((out.totalEncodeTime/out.framesEncoded)*1000) : '—';
     const sent = (out.bytesSent / (1024*1024)).toFixed(1);
     const qual = out.qualityLimitationReason || '—';
+    const codecUsed = (codecSel.value || 'h264').toUpperCase();
+    const abrTag = abrCheck.checked ? ' ABR' : '';
     statsEl.textContent =
       `${mbps} Mbps (${kbps} kbps)   ${fps} fps   ${res}\n` +
-      `rtt ${rtt}ms   encode ${encMs}ms/f   limit: ${qual}\n` +
-      `enviado: ${sent} MB   keyframes: ${out.keyFramesEncoded ?? '—'}`;
+      `rtt ${rtt}ms   encode ${encMs}ms/f   ${codecUsed}${abrTag}\n` +
+      `limit: ${qual}   enviado: ${sent} MB   keyframes: ${out.keyFramesEncoded ?? '—'}`;
     last = out;
   }, 1000);
 }
 function stopStats() { if (statsTimer) { clearInterval(statsTimer); statsTimer = null; } statsEl.textContent = ''; }
+
+// ---- settings persistence --------------------------------------------------
+const SETTINGS_KEY = 'pwvd.settings';
+function saveSettings() {
+  const s = {
+    codec: codecSel.value, preset: presetSel.value, hint: hintSel.value,
+    bitrate: brRange.value, abr: abrCheck.checked, orient: orientSel.value,
+    cam: camSel.value,
+  };
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+}
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    if (s.codec) codecSel.value = s.codec;
+    if (s.preset) presetSel.value = s.preset;
+    if (s.hint) hintSel.value = s.hint;
+    if (s.bitrate) brRange.value = s.bitrate;
+    if (s.abr != null) abrCheck.checked = s.abr;
+    if (s.orient) orientSel.value = s.orient;
+    updateBrLabel();
+  } catch {}
+}
+// Save on any change.
+for (const el of [codecSel, presetSel, hintSel, orientSel, camSel, abrCheck]) {
+  el.addEventListener('change', saveSettings);
+}
+brRange.addEventListener('input', saveSettings);
+
+// ---- camera hardware controls (torch, zoom, exposure) ----------------------
+function setupCameraControls(track) {
+  const caps = track.getCapabilities ? track.getCapabilities() : {};
+  // Torch
+  if (caps.torch) {
+    torchCheck.disabled = false;
+    torchCheck.addEventListener('change', () => {
+      track.applyConstraints({ advanced: [{ torch: torchCheck.checked }] }).catch(() => {});
+    });
+  } else {
+    torchCheck.disabled = true; torchCheck.checked = false;
+  }
+  // Zoom
+  if (caps.zoom) {
+    zoomRange.disabled = false;
+    zoomRange.min = Math.round(caps.zoom.min * 100);
+    zoomRange.max = Math.round(caps.zoom.max * 100);
+    zoomRange.step = Math.round(caps.zoom.step * 100) || 10;
+    zoomRange.value = Math.round((track.getSettings().zoom || caps.zoom.min) * 100);
+    zoomLabel.textContent = `${(zoomRange.value / 100).toFixed(1)}x`;
+    zoomRange.addEventListener('input', () => {
+      const z = zoomRange.value / 100;
+      zoomLabel.textContent = `${z.toFixed(1)}x`;
+      track.applyConstraints({ advanced: [{ zoom: z }] }).catch(() => {});
+    });
+  } else {
+    zoomRange.disabled = true; zoomLabel.textContent = 'N/A';
+  }
+  // Exposure compensation
+  if (caps.exposureCompensation) {
+    expRange.disabled = false;
+    const min = caps.exposureCompensation.min;
+    const max = caps.exposureCompensation.max;
+    expRange.min = Math.round(min * 10);
+    expRange.max = Math.round(max * 10);
+    expRange.step = Math.round((caps.exposureCompensation.step || 0.1) * 10) || 1;
+    expRange.value = Math.round(((track.getSettings().exposureCompensation || 0)) * 10);
+    const updateExpLabel = () => {
+      const v = expRange.value / 10;
+      expLabel.textContent = v === 0 ? 'Auto' : (v > 0 ? `+${v.toFixed(1)}` : v.toFixed(1));
+    };
+    updateExpLabel();
+    expRange.addEventListener('input', () => {
+      updateExpLabel();
+      track.applyConstraints({ advanced: [{ exposureCompensation: expRange.value / 10 }] }).catch(() => {});
+    });
+  } else {
+    expRange.disabled = true; expLabel.textContent = 'N/A';
+  }
+}
 
 // ---- init ------------------------------------------------------------------
 (async () => {
@@ -471,6 +576,7 @@ function stopStats() { if (statsTimer) { clearInterval(statsTimer); statsTimer =
   }
   try {
     await loadConfig();
+    loadSettings();
     // First probe (no labels yet), then ask permission, then re-enumerate to get labels.
     await enumerateCameras();
     await probeCapabilities();

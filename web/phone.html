@@ -52,11 +52,14 @@
       <label>Bitrate alvo: <span id="brLabel">—</span>
         <input id="brRange" type="range" min="500" max="50000" step="500" value="10000" />
       </label>
+      <label style="flex-direction:row;gap:8px;align-items:center">
+        <input type="checkbox" id="abrCheck" /> Bitrate adaptativo (piso 70%)
+      </label>
       <label>Codec preferido
         <select id="codecSel">
-          <option value="h264">H.264 (recomendado para OBS)</option>
+          <option value="h264">H.264 (compatível com tudo)</option>
           <option value="vp9">VP9</option>
-          <option value="av1">AV1</option>
+          <option value="av1">AV1 (melhor compressão)</option>
           <option value="vp8">VP8</option>
         </select>
       </label>
@@ -73,6 +76,15 @@
           <option value="detail">Detalhe (estático)</option>
           <option value="motion">Movimento (ação)</option>
         </select>
+      </label>
+      <label>Zoom: <span id="zoomLabel">1.0x</span>
+        <input id="zoomRange" type="range" min="100" max="100" step="10" value="100" disabled />
+      </label>
+      <label>Exposição: <span id="expLabel">Auto</span>
+        <input id="expRange" type="range" min="0" max="100" step="1" value="50" disabled />
+      </label>
+      <label style="flex-direction:row;gap:8px;align-items:center">
+        <input type="checkbox" id="torchCheck" disabled /> Lanterna (flash)
       </label>
     </details>
 
