@@ -90,8 +90,14 @@
 
     <div id="stats" class="stats"></div>
     <div id="msg" class="msg"></div>
+    <div id="dbg" style="font:11px monospace;color:#f80;padding:4px 0;white-space:pre-wrap;max-height:80px;overflow-y:auto"></div>
   </div>
 
+  <!-- Inline error catcher (runs before module, catches silent failures on iOS) -->
+  <script>
+    window.onerror=function(m,s,l){document.getElementById('dbg').textContent+='ERR: '+m+' ('+s+':'+l+')\n';};
+    window.addEventListener('unhandledrejection',function(e){document.getElementById('dbg').textContent+='REJ: '+(e.reason?.message||e.reason)+'\n';});
+  </script>
   <script type="module" src="./phone.js"></script>
 </body>
 </html>
