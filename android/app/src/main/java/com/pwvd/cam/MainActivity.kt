@@ -9,8 +9,8 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.SurfaceHolder
-import android.view.SurfaceView
 import android.view.View
+import com.pedro.library.view.OpenGlView
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -21,7 +21,7 @@ import com.pedro.library.rtmp.RtmpCamera2
 class MainActivity : AppCompatActivity(), ConnectChecker, SurfaceHolder.Callback {
 
     private lateinit var rtmpCamera: RtmpCamera2
-    private lateinit var surfaceView: SurfaceView
+    private lateinit var openGlView: OpenGlView
     private lateinit var btnStream: Button
     private lateinit var btnCamera: Button
     private lateinit var etServer: EditText
@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity(), ConnectChecker, SurfaceHolder.Callback
 
         prefs = getSharedPreferences("pwvd", MODE_PRIVATE)
 
-        surfaceView   = findViewById(R.id.surfaceView)
+        openGlView    = findViewById(R.id.surfaceView)
         btnStream     = findViewById(R.id.btnStream)
         btnCamera     = findViewById(R.id.btnCamera)
         etServer      = findViewById(R.id.etServer)
@@ -99,8 +99,8 @@ class MainActivity : AppCompatActivity(), ConnectChecker, SurfaceHolder.Callback
         }
 
         // Camera setup
-        rtmpCamera = RtmpCamera2(surfaceView, this)
-        surfaceView.holder.addCallback(this)
+        rtmpCamera = RtmpCamera2(openGlView, this)
+        openGlView.holder.addCallback(this)
 
         btnStream.setOnClickListener { toggleStream() }
         btnCamera.setOnClickListener { rtmpCamera.switchCamera() }
@@ -162,7 +162,7 @@ class MainActivity : AppCompatActivity(), ConnectChecker, SurfaceHolder.Callback
 
         if (!isPrepared) {
             val (w, h) = res()
-            val ok = rtmpCamera.prepareVideo(w, h, fps(), bitrateKbps() * 1000)
+            val ok = rtmpCamera.prepareVideo(w, h, fps(), bitrateKbps() * 1000, 0)
             if (!ok) {
                 setStatus("Resolução ${w}×${h} não suportada", "#e15454")
                 wantStream = false
