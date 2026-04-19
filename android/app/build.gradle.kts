@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "com.pwvd.cam"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.pwvd.cam"
