@@ -9,9 +9,27 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <com.pwvd.cam.GridOverlayView
+        android:id="@+id/gridOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- HUD de status -->
+    <TextView android:id="@+id/tvHud"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|bottom"
+        android:layout_margin="10dp"
+        android:padding="6dp"
+        android:background="#80000000"
+        android:textColor="#6ee17c"
+        android:textSize="11sp"
+        android:fontFamily="monospace"
+        android:visibility="gone" />
+
     <ScrollView
         android:id="@+id/controls"
-        android:layout_width="280dp"
+        android:layout_width="310dp"
         android:layout_height="match_parent"
         android:layout_gravity="end"
         android:background="#CC000000"
@@ -29,7 +47,21 @@
                 android:textColor="#fff"
                 android:textSize="18sp"
                 android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
+                android:layout_marginBottom="4dp" />
+
+            <!-- ===== PRESETS ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— PRESET RÁPIDO —" android:textColor="#f0c040" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <Spinner android:id="@+id/spinnerPreset"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="10dp" />
+
+            <!-- ===== CONEXÃO ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— CONEXÃO —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Servidor (IP)" android:textColor="#9a9ab0" android:textSize="11sp" />
@@ -47,7 +79,18 @@
                 android:hint="cam-phone" android:inputType="text"
                 android:textColor="#e7e7ef" android:textColorHint="#444"
                 android:background="#1a1a24" android:padding="8dp" android:textSize="13sp"
-                android:layout_marginBottom="6dp" android:singleLine="true" />
+                android:layout_marginBottom="10dp" android:singleLine="true" />
+
+            <!-- ===== VÍDEO ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— VÍDEO —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Codec" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerCodec"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="Resolução" android:textColor="#9a9ab0" android:textSize="11sp" />
@@ -67,8 +110,637 @@
             <SeekBar android:id="@+id/seekBitrate"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:max="50" android:progress="10"
+                android:layout_marginBottom="6dp" />
+
+            <CheckBox android:id="@+id/cbAdaptiveBitrate"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Bitrate adaptativo (piso 70%)" android:textColor="#e7e7ef"
+                android:textSize="12sp" android:buttonTint="#1f6feb" android:checked="true"
+                android:layout_marginBottom="10dp" />
+
+            <!-- ===== CÂMERA ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— CÂMERA —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Lente" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerCamera"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Foco" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerFocus"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:id="@+id/tvExposure"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Exposição: 0" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <SeekBar android:id="@+id/seekExposure"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Grade" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerGrid"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <CheckBox android:id="@+id/cbTorch"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Lanterna (flash)" android:textColor="#e7e7ef" android:textSize="12sp"
+                android:buttonTint="#1f6feb" android:layout_marginBottom="2dp" />
+
+            <CheckBox android:id="@+id/cbStabilization"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Estabilização de vídeo" android:textColor="#e7e7ef" android:textSize="12sp"
+                android:buttonTint="#1f6feb" android:layout_marginBottom="10dp" />
+
+            <!-- ===== TELA ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— TELA —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Modo de tela" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerScreen"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:id="@+id/tvBrightness"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Brilho da tela: Auto" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <SeekBar android:id="@+id/seekBrightness"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:max="100" android:progress="0"
                 android:layout_marginBottom="12dp" />
 
+            <!-- ===== AÇÕES ===== -->
+            <Button android:id="@+id/btnStream"
+                android:layout_width="match_parent" android:layout_height="48dp"
+                android:text="Iniciar transmissão" android:textColor="#fff"
+                android:backgroundTint="#1f6feb" android:layout_marginBottom="8dp" />
+
+            <Button android:id="@+id/btnCamera"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:text="Trocar câmera (próxima)" android:textColor="#fff"
+                android:backgroundTint="#25252e" android:layout_marginBottom="12dp" />
+
+            <TextView android:id="@+id/tvStatus"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Pronto" android:textColor="#6ee17c"
+                android:textSize="12sp" android:fontFamily="monospace" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <ImageButton android:id="@+id/btnToggleControls"
+        android:layout_width="44dp" android:layout_height="44dp"
+        android:layout_gravity="start|top" android:layout_margin="8dp"
+        android:src="@android:drawable/ic_menu_manage"
+        android:background="@android:color/transparent"
+        android:contentDescription="Mostrar/ocultar controles" />
+
+</FrameLayout>
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000">
+
+    <com.pedro.library.view.OpenGlView
+        android:id="@+id/surfaceView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.pwvd.cam.GridOverlayView
+        android:id="@+id/gridOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- HUD de status -->
+    <TextView android:id="@+id/tvHud"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|bottom"
+        android:layout_margin="10dp"
+        android:padding="6dp"
+        android:background="#80000000"
+        android:textColor="#6ee17c"
+        android:textSize="11sp"
+        android:fontFamily="monospace"
+        android:visibility="gone" />
+
+    <ScrollView
+        android:id="@+id/controls"
+        android:layout_width="310dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="#CC000000"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PWVD Cam"
+                android:textColor="#fff"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <!-- ===== CONEXÃO ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— CONEXÃO —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Servidor (IP)" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <EditText android:id="@+id/etServer"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:hint="192.168.2.140" android:inputType="text"
+                android:textColor="#e7e7ef" android:textColorHint="#444"
+                android:background="#1a1a24" android:padding="8dp" android:textSize="13sp"
+                android:layout_marginBottom="6dp" android:singleLine="true" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Nome do stream" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <EditText android:id="@+id/etStreamName"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:hint="cam-phone" android:inputType="text"
+                android:textColor="#e7e7ef" android:textColorHint="#444"
+                android:background="#1a1a24" android:padding="8dp" android:textSize="13sp"
+                android:layout_marginBottom="10dp" android:singleLine="true" />
+
+            <!-- ===== VÍDEO ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— VÍDEO —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Resolução" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerRes"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="FPS" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerFps"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:id="@+id/tvBitrate"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Bitrate: 10 Mbps" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <SeekBar android:id="@+id/seekBitrate"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:max="50" android:progress="10"
+                android:layout_marginBottom="6dp" />
+
+            <CheckBox android:id="@+id/cbAdaptiveBitrate"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Bitrate adaptativo (piso 70%)" android:textColor="#e7e7ef"
+                android:textSize="12sp" android:buttonTint="#1f6feb" android:checked="true"
+                android:layout_marginBottom="10dp" />
+
+            <!-- ===== CÂMERA ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— CÂMERA —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Lente" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerCamera"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Foco" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerFocus"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:id="@+id/tvExposure"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Exposição: 0" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <SeekBar android:id="@+id/seekExposure"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Grade" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerGrid"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <CheckBox android:id="@+id/cbTorch"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Lanterna (flash)" android:textColor="#e7e7ef" android:textSize="12sp"
+                android:buttonTint="#1f6feb" android:layout_marginBottom="2dp" />
+
+            <CheckBox android:id="@+id/cbStabilization"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Estabilização de vídeo" android:textColor="#e7e7ef" android:textSize="12sp"
+                android:buttonTint="#1f6feb" android:layout_marginBottom="10dp" />
+
+            <!-- ===== TELA E LIMITES ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— TELA E LIMITES —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Modo de tela" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerScreen"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:id="@+id/tvBrightness"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Brilho da tela: Auto" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <SeekBar android:id="@+id/seekBrightness"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:max="100" android:progress="0"
+                android:layout_marginBottom="12dp" />
+
+            <!-- ===== AÇÕES ===== -->
+            <Button android:id="@+id/btnStream"
+                android:layout_width="match_parent" android:layout_height="48dp"
+                android:text="Iniciar transmissão" android:textColor="#fff"
+                android:backgroundTint="#1f6feb" android:layout_marginBottom="8dp" />
+
+            <Button android:id="@+id/btnCamera"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:text="Trocar câmera (próxima)" android:textColor="#fff"
+                android:backgroundTint="#25252e" android:layout_marginBottom="12dp" />
+
+            <TextView android:id="@+id/tvStatus"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Pronto" android:textColor="#6ee17c"
+                android:textSize="12sp" android:fontFamily="monospace" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <ImageButton android:id="@+id/btnToggleControls"
+        android:layout_width="44dp" android:layout_height="44dp"
+        android:layout_gravity="start|top" android:layout_margin="8dp"
+        android:src="@android:drawable/ic_menu_manage"
+        android:background="@android:color/transparent"
+        android:contentDescription="Mostrar/ocultar controles" />
+
+</FrameLayout>
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000">
+
+    <com.pedro.library.view.OpenGlView
+        android:id="@+id/surfaceView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.pwvd.cam.GridOverlayView
+        android:id="@+id/gridOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- HUD de status -->
+    <TextView android:id="@+id/tvHud"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|bottom"
+        android:layout_margin="10dp"
+        android:padding="6dp"
+        android:background="#80000000"
+        android:textColor="#6ee17c"
+        android:textSize="11sp"
+        android:fontFamily="monospace"
+        android:visibility="gone" />
+
+    <ScrollView
+        android:id="@+id/controls"
+        android:layout_width="310dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="#CC000000"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PWVD Cam"
+                android:textColor="#fff"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <!-- ===== CONEXÃO ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— CONEXÃO —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Servidor (IP)" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <EditText android:id="@+id/etServer"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:hint="192.168.2.140" android:inputType="text"
+                android:textColor="#e7e7ef" android:textColorHint="#444"
+                android:background="#1a1a24" android:padding="8dp" android:textSize="13sp"
+                android:layout_marginBottom="6dp" android:singleLine="true" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Nome do stream" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <EditText android:id="@+id/etStreamName"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:hint="cam-phone" android:inputType="text"
+                android:textColor="#e7e7ef" android:textColorHint="#444"
+                android:background="#1a1a24" android:padding="8dp" android:textSize="13sp"
+                android:layout_marginBottom="10dp" android:singleLine="true" />
+
+            <!-- ===== VÍDEO ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— VÍDEO —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Resolução" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerRes"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="FPS" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerFps"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:id="@+id/tvBitrate"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Bitrate: 10 Mbps" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <SeekBar android:id="@+id/seekBitrate"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:max="50" android:progress="10"
+                android:layout_marginBottom="10dp" />
+
+            <!-- ===== CÂMERA ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— CÂMERA —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Lente" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerCamera"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Foco" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerFocus"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:id="@+id/tvExposure"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Exposição: 0" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <SeekBar android:id="@+id/seekExposure"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Grade" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerGrid"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <CheckBox android:id="@+id/cbTorch"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Lanterna (flash)" android:textColor="#e7e7ef" android:textSize="12sp"
+                android:buttonTint="#1f6feb" android:layout_marginBottom="2dp" />
+
+            <CheckBox android:id="@+id/cbStabilization"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Estabilização de vídeo" android:textColor="#e7e7ef" android:textSize="12sp"
+                android:buttonTint="#1f6feb" android:layout_marginBottom="10dp" />
+
+            <!-- ===== TELA E LIMITES ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— TELA E LIMITES —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Modo de tela" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerScreen"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:id="@+id/tvBrightness"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Brilho da tela: Auto" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <SeekBar android:id="@+id/seekBrightness"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:max="100" android:progress="0"
+                android:layout_marginBottom="6dp" />
+
+            <CheckBox android:id="@+id/cbThermalProtect"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Proteção térmica (reduz qualidade)" android:textColor="#e7e7ef"
+                android:textSize="12sp" android:buttonTint="#1f6feb" android:checked="true"
+                android:layout_marginBottom="12dp" />
+
+            <!-- ===== AÇÕES ===== -->
+            <Button android:id="@+id/btnStream"
+                android:layout_width="match_parent" android:layout_height="48dp"
+                android:text="Iniciar transmissão" android:textColor="#fff"
+                android:backgroundTint="#1f6feb" android:layout_marginBottom="8dp" />
+
+            <Button android:id="@+id/btnCamera"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:text="Trocar câmera (próxima)" android:textColor="#fff"
+                android:backgroundTint="#25252e" android:layout_marginBottom="12dp" />
+
+            <TextView android:id="@+id/tvStatus"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Pronto" android:textColor="#6ee17c"
+                android:textSize="12sp" android:fontFamily="monospace" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <ImageButton android:id="@+id/btnToggleControls"
+        android:layout_width="44dp" android:layout_height="44dp"
+        android:layout_gravity="start|top" android:layout_margin="8dp"
+        android:src="@android:drawable/ic_menu_manage"
+        android:background="@android:color/transparent"
+        android:contentDescription="Mostrar/ocultar controles" />
+
+</FrameLayout>
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000">
+
+    <com.pedro.library.view.OpenGlView
+        android:id="@+id/surfaceView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.pwvd.cam.GridOverlayView
+        android:id="@+id/gridOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- HUD de status no canto superior esquerdo -->
+    <TextView android:id="@+id/tvHud"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|bottom"
+        android:layout_margin="10dp"
+        android:padding="6dp"
+        android:background="#80000000"
+        android:textColor="#6ee17c"
+        android:textSize="11sp"
+        android:fontFamily="monospace"
+        android:visibility="gone"
+        android:text="" />
+
+    <ScrollView
+        android:id="@+id/controls"
+        android:layout_width="300dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="#CC000000"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PWVD Cam"
+                android:textColor="#fff"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <!-- ===== CONEXÃO ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— CONEXÃO —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Servidor (IP)" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <EditText android:id="@+id/etServer"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:hint="192.168.2.140" android:inputType="text"
+                android:textColor="#e7e7ef" android:textColorHint="#444"
+                android:background="#1a1a24" android:padding="8dp" android:textSize="13sp"
+                android:layout_marginBottom="6dp" android:singleLine="true" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Nome do stream" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <EditText android:id="@+id/etStreamName"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:hint="cam-phone" android:inputType="text"
+                android:textColor="#e7e7ef" android:textColorHint="#444"
+                android:background="#1a1a24" android:padding="8dp" android:textSize="13sp"
+                android:layout_marginBottom="10dp" android:singleLine="true" />
+
+            <!-- ===== VÍDEO ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— VÍDEO —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Resolução" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerRes"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="FPS" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerFps"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:id="@+id/tvBitrate"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Bitrate: 10 Mbps" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <SeekBar android:id="@+id/seekBitrate"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:max="50" android:progress="10"
+                android:layout_marginBottom="10dp" />
+
+            <!-- ===== CÂMERA ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— CÂMERA —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Foco" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerFocus"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:id="@+id/tvExposure"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Exposição: 0" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <SeekBar android:id="@+id/seekExposure"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Grade" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerGrid"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <CheckBox android:id="@+id/cbTorch"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Lanterna (flash)" android:textColor="#e7e7ef" android:textSize="12sp"
+                android:buttonTint="#1f6feb" android:layout_marginBottom="10dp" />
+
+            <!-- ===== LIMITES ===== -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="— LIMITES —" android:textColor="#1f6feb" android:textSize="10sp"
+                android:textStyle="bold" android:layout_marginBottom="4dp" />
+
+            <CheckBox android:id="@+id/cbThermalProtect"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Reduzir qualidade se aquecer" android:textColor="#e7e7ef"
+                android:textSize="12sp" android:buttonTint="#1f6feb" android:checked="true"
+                android:layout_marginBottom="4dp" />
+
+            <CheckBox android:id="@+id/cbKeepScreen"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Manter tela ligada" android:textColor="#e7e7ef"
+                android:textSize="12sp" android:buttonTint="#1f6feb" android:checked="true"
+                android:layout_marginBottom="4dp" />
+
+            <TextView android:id="@+id/tvBrightness"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Brilho da tela: Auto" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <SeekBar android:id="@+id/seekBrightness"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:max="100" android:progress="0"
+                android:layout_marginBottom="12dp" />
+
+            <!-- ===== AÇÕES ===== -->
             <Button android:id="@+id/btnStream"
                 android:layout_width="match_parent" android:layout_height="48dp"
                 android:text="Iniciar transmissão" android:textColor="#fff"

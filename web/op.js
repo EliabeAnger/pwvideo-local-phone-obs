@@ -200,18 +200,16 @@ function renderPublishers(s) {
   for (const [name, pub] of byName) {
     let card = publisherCards.get(name);
     if (!card) {
-      card = createPublisherCard(name);
+      card = createPublisherCard(name, pub.transport);
       publisherCards.set(name, card);
       list.appendChild(card.root);
-      // Preview fica DESLIGADO por padrão. Usuário liga clicando no botão.
-      // Isso evita baixar/decodificar o stream principal quando ninguém está olhando.
     }
     const pathInfo = (s.paths || []).find(p => p.name === name);
     updateCardMeta(card, pub, pathInfo);
   }
 }
 
-function createPublisherCard(name) {
+function createPublisherCard(name, transport) {
   const host  = cfg?.lan?.ip || location.hostname;
   const port  = cfg?.lan?.port || location.port;
   const whep  = `https://${host}:${port}/whep/${name}`;
@@ -219,13 +217,14 @@ function createPublisherCard(name) {
   const rtsp  = `rtsp://${host}:8554/${name}`;
   const rtspL = `rtsp://localhost:8554/${name}`;
   const obsUrl = `https://localhost:${port}/obs.html?stream=${encodeURIComponent(name)}`;
+  const badge = transport === 'rtmp' ? 'RTMP' : 'WebRTC';
 
   const root = document.createElement('div');
   root.className = 'pub-card';
   root.innerHTML = `
     <div class="pub-header">
       <strong>${escapeHtml(name)}</strong>
-      <span class="badge pub">ao vivo</span>
+      <span class="badge pub">ao vivo · ${badge}</span>
       <button class="preview-toggle" data-role="toggle">Ver preview</button>
       <button class="kick-btn" data-role="kick" title="Derrubar este celular">Parar</button>
     </div>

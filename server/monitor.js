@@ -32,12 +32,13 @@ async function mtx(path) {
 }
 
 export async function getStatus({ maxCpuPercent }) {
-  const [paths, whipSess, whepSess, rtspSess, rtspConns] = await Promise.all([
+  const [paths, whipSess, whepSess, rtspSess, rtspConns, rtmpConns] = await Promise.all([
     mtx('/v3/paths/list'),
     mtx('/v3/webrtcsessions/list'),
     mtx('/v3/webrtcsessions/list'), // same endpoint, filtered below
     mtx('/v3/rtspsessions/list'),
     mtx('/v3/rtspconns/list'),
+    mtx('/v3/rtmpconns/list'),
   ]);
 
   const mem = { total: totalmem(), free: freemem() };
@@ -47,6 +48,14 @@ export async function getStatus({ maxCpuPercent }) {
   const wrtc = whipSess?.items || [];
   const publishers = wrtc.filter(s => (s.state || '').toLowerCase() === 'publish').map(mapWrtc);
   const readers    = wrtc.filter(s => (s.state || '').toLowerCase() === 'read').map(mapWrtc);
+
+  // RTMP publishers (native app sends via RTMP)
+  const rtmpItems = rtmpConns?.items || [];
+  for (const c of rtmpItems) {
+    if ((c.state || '').toLowerCase() === 'publish') {
+      publishers.push(mapRtmp(c));
+    }
+  }
 
   const rtsp = (rtspSess?.items || []).map(s => {
     const dev = getDeviceByIp(s.remoteAddr || '');
@@ -99,6 +108,7 @@ function mapWrtc(s) {
     id: s.id,
     path: s.path,
     role: (s.state || '').toLowerCase(),
+    transport: 'webrtc',
     remoteAddr: s.remoteAddr,
     peerConnectionEstablished: s.peerConnectionEstablished,
     bytesSent: s.bytesSent,
@@ -109,6 +119,25 @@ function mapWrtc(s) {
       browser: dev.browser, browserVersion: dev.browserVersion,
       model: dev.uaModel || dev.model,
       brands: dev.uaBrands,
+    } : null,
+  };
+}
+
+function mapRtmp(s) {
+  const dev = getDeviceByIp(s.remoteAddr || '');
+  return {
+    id: s.id,
+    path: s.path,
+    role: (s.state || '').toLowerCase(),
+    transport: 'rtmp',
+    remoteAddr: s.remoteAddr,
+    bytesSent: s.bytesSent,
+    bytesReceived: s.bytesReceived,
+    created: s.created,
+    device: dev ? {
+      os: dev.os, osVersion: dev.osVersion,
+      browser: dev.browser, browserVersion: dev.browserVersion,
+      model: dev.uaModel || dev.model,
     } : null,
   };
 }
