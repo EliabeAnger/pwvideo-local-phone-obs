@@ -25,8 +25,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.pedro.common.ConnectChecker
+import com.pedro.common.VideoCodec
 import com.pedro.library.rtmp.RtmpCamera2
-import com.pedro.library.util.VideoCodec
 import com.pedro.library.view.OpenGlView
 
 class MainActivity : AppCompatActivity(), ConnectChecker, SurfaceHolder.Callback {
@@ -63,14 +63,13 @@ class MainActivity : AppCompatActivity(), ConnectChecker, SurfaceHolder.Callback
     private var wantStream = false
     private var isPrepared = false
     private var applyingPreset = false
-    private var bitrateAdapter: com.pedro.common.BitrateAdapter? = null
     private var configuredBitrateBps = 0
     private var minBitrateBps = 0
+    private var abrEnabled = true
     private val handler = Handler(Looper.getMainLooper())
     private var hudRunnable: Runnable? = null
     private var streamStartTime = 0L
     private var lastBitrateKbps = 0L
-    private var currentBitrateKbps = 0L
     private var totalBytesSent = 0L
     private var lastTrafficBytes = 0L
 
@@ -212,7 +211,7 @@ class MainActivity : AppCompatActivity(), ConnectChecker, SurfaceHolder.Callback
     private fun switchToCamera(pos: Int) {
         if (pos >= cameras.size) return
         try {
-            rtmpCamera.openCameraId(cameras[pos].id)
+            rtmpCamera.switchCamera(cameras[pos].id)
             handler.postDelayed({ applyFocus(); applyExposure(); if (cbStabilization.isChecked) applyStabilization(true); if (cbTorch.isChecked) try { rtmpCamera.enableLantern() } catch (_: Exception) { cbTorch.isChecked = false } }, 500)
         } catch (_: Exception) {}
     }
@@ -257,7 +256,7 @@ class MainActivity : AppCompatActivity(), ConnectChecker, SurfaceHolder.Callback
     private fun applyBrightness() { val p = seekBrightness.progress; val lp = window.attributes; lp.screenBrightness = if (p == 0) WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE else p / 100f; window.attributes = lp }
     private fun toggleStream() {
         if (wantStream) {
-            wantStream = false; bitrateAdapter = null
+            wantStream = false
             if (rtmpCamera.isStreaming) rtmpCamera.stopStream()
             isPrepared = false
             btnStream.text = "Iniciar transmissao"
@@ -274,6 +273,7 @@ class MainActivity : AppCompatActivity(), ConnectChecker, SurfaceHolder.Callback
             val targetBitrate = bitrateBps()
             configuredBitrateBps = targetBitrate
             minBitrateBps = (targetBitrate * 0.70).toInt()
+            abrEnabled = cbAdaptiveBitrate.isChecked
             rtmpCamera.setVideoCodec(if (isH265()) VideoCodec.H265 else VideoCodec.H264)
             val ok = rtmpCamera.prepareVideo(w, h, fps(), targetBitrate, 0)
             if (!ok) { setStatus("Resolucao nao suportada", "#e15454"); wantStream = false; return }
@@ -292,7 +292,7 @@ class MainActivity : AppCompatActivity(), ConnectChecker, SurfaceHolder.Callback
     private fun startHud() {
         streamStartTime = System.currentTimeMillis(); totalBytesSent = 0
         lastTrafficBytes = TrafficStats.getUidTxBytes(android.os.Process.myUid())
-        currentBitrateKbps = configuredBitrateBps.toLong() / 1000; tvHud.visibility = View.VISIBLE
+        tvHud.visibility = View.VISIBLE
         hudRunnable = object : Runnable { override fun run() { updateHud(); handler.postDelayed(this, 1000) } }
         handler.post(hudRunnable!!)
     }
@@ -310,27 +310,42 @@ class MainActivity : AppCompatActivity(), ConnectChecker, SurfaceHolder.Callback
         val dataStr = when { totalBytesSent < 1024 * 1024 -> "${totalBytesSent / 1024} KB"; totalBytesSent < 1024L * 1024 * 1024 -> String.format("%.1f MB", totalBytesSent / (1024.0 * 1024)); else -> String.format("%.2f GB", totalBytesSent / (1024.0 * 1024 * 1024)) }
         val bitrateStr = if (lastBitrateKbps > 1000) String.format("%.1f Mbps", lastBitrateKbps / 1000.0) else "$lastBitrateKbps kbps"
         val codec = if (isH265()) "H265" else "H264"
-        val abr = if (cbAdaptiveBitrate.isChecked) " ABR" else ""
+        val abr = if (abrEnabled) " ABR" else ""
         val (rw, rh) = res()
         tvHud.text = "$timeStr | $bitrateStr | $codec$abr\n${rw}x${rh}@${fps()}fps | $dataStr"
     }
 
     override fun onConnectionStarted(url: String) = setStatus("Conectando...", "#f0c040")
+
     override fun onConnectionSuccess() {
         setStatus("Transmitindo", "#6ee17c")
-        if (cbAdaptiveBitrate.isChecked) {
-            bitrateAdapter = com.pedro.common.BitrateAdapter(object : com.pedro.common.BitrateAdapter.Listener {
-                override fun onBitrateAdapted(bitrate: Int) { val clamped = maxOf(bitrate, minBitrateBps); rtmpCamera.setVideoBitrateOnFly(clamped); currentBitrateKbps = clamped.toLong() / 1000 }
-            })
-            bitrateAdapter?.setMaxBitrate(configuredBitrateBps)
-        }
         runOnUiThread { startHud() }
     }
-    override fun onConnectionFailed(reason: String) { setStatus("Falha: $reason", "#e15454"); bitrateAdapter = null; runOnUiThread { if (wantStream) { isPrepared = false; tvStatus.postDelayed({ startStream() }, 3000) } } }
-    override fun onDisconnect() { setStatus("Desconectado. Reconectando...", "#f0c040"); bitrateAdapter = null; runOnUiThread { stopHud(); if (wantStream) tvStatus.postDelayed({ startStream() }, 2000) } }
+
+    override fun onConnectionFailed(reason: String) {
+        setStatus("Falha: $reason", "#e15454")
+        runOnUiThread { if (wantStream) { isPrepared = false; tvStatus.postDelayed({ startStream() }, 3000) } }
+    }
+
+    override fun onDisconnect() {
+        setStatus("Desconectado. Reconectando...", "#f0c040")
+        runOnUiThread { stopHud(); if (wantStream) tvStatus.postDelayed({ startStream() }, 2000) }
+    }
+
     override fun onAuthError() = setStatus("Erro de autenticacao", "#e15454")
     override fun onAuthSuccess() {}
-    override fun onNewBitrate(bitrate: Long) { lastBitrateKbps = bitrate / 1000; bitrateAdapter?.adaptBitrate(bitrate) }
+
+    override fun onNewBitrate(bitrate: Long) {
+        lastBitrateKbps = bitrate / 1000
+        if (abrEnabled && configuredBitrateBps > 0) {
+            val newBitrate = when {
+                bitrate > configuredBitrateBps * 0.90 -> configuredBitrateBps
+                bitrate < minBitrateBps -> minBitrateBps
+                else -> bitrate.toInt()
+            }
+            rtmpCamera.setVideoBitrateOnFly(newBitrate)
+        }
+    }
 
     override fun surfaceCreated(holder: SurfaceHolder) { if (!rtmpCamera.isOnPreview) rtmpCamera.startPreview(); handler.postDelayed({ applyFocus(); applyExposure(); if (cbStabilization.isChecked) applyStabilization(true) }, 600) }
     override fun surfaceChanged(h: SurfaceHolder, f: Int, w: Int, ht: Int) {}
@@ -348,7 +363,7 @@ class MainActivity : AppCompatActivity(), ConnectChecker, SurfaceHolder.Callback
     }
 
     override fun onDestroy() {
-        super.onDestroy(); wantStream = false; bitrateAdapter = null; stopHud()
+        super.onDestroy(); wantStream = false; stopHud()
         if (rtmpCamera.isStreaming) rtmpCamera.stopStream()
         if (rtmpCamera.isOnPreview) rtmpCamera.stopPreview()
         stopService(Intent(this, StreamService::class.java))
