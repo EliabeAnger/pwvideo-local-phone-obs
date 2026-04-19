@@ -5,8 +5,9 @@
 // - Exposes /api/config with everything the web UI needs.
 import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
-import { readFileSync, existsSync, writeFileSync } from 'node:fs';
-import { randomBytes } from 'node:crypto';
+import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
+import { randomBytes, X509Certificate } from 'node:crypto';
+import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve, join } from 'node:path';
 import qrcode from 'qrcode-terminal';
@@ -47,12 +48,58 @@ function requireAuth(req, reply, done) {
   reply.code(401).send({ error: 'Não autorizado' });
 }
 
-// ---- TLS ----
-if (!existsSync(TLS_CERT) || !existsSync(TLS_KEY)) {
-  console.error('[pwvd] TLS cert or key missing. Run `npm run certs` first.');
-  console.error(`[pwvd]   cert: ${TLS_CERT}`);
-  console.error(`[pwvd]   key : ${TLS_KEY}`);
+// ---- TLS (auto-regenerate when IP changes) ----
+function certCoversIPs(certPath, requiredIPs) {
+  try {
+    const pem = readFileSync(certPath, 'utf8');
+    const cert = new X509Certificate(pem);
+    const san = cert.subjectAltName || '';
+    for (const ip of requiredIPs) {
+      if (!san.includes(`IP Address:${ip}`)) return false;
+    }
+    return true;
+  } catch { return false; }
+}
+
+function regenerateCert(certPath, keyPath, hosts) {
+  const certsDir = resolve(certPath, '..');
+  mkdirSync(certsDir, { recursive: true });
+
+  // Try mkcert first (locally-trusted)
+  try {
+    execSync('mkcert -version', { stdio: 'ignore' });
+    try { execSync('mkcert -install', { stdio: 'ignore' }); } catch {}
+    execSync(`mkcert -cert-file "${certPath}" -key-file "${keyPath}" ${hosts.join(' ')}`, { stdio: 'inherit' });
+    console.log(`[pwvd] Certificado regenerado via mkcert para: ${hosts.join(', ')}`);
+    return;
+  } catch {}
+
+  // Fallback: openssl (bundled with Git for Windows)
+  try {
+    execSync('openssl version', { stdio: 'ignore' });
+    const san = hosts.map((h, i) => /^\d+\.\d+\.\d+\.\d+$/.test(h) ? `IP.${i+1} = ${h}` : `DNS.${i+1} = ${h}`).join('\n');
+    const cnf = `[req]\ndistinguished_name = dn\nx509_extensions = v3\nprompt = no\n[dn]\nCN = pwvd-local\n[v3]\nsubjectAltName = @alt\nkeyUsage = digitalSignature, keyEncipherment\nextendedKeyUsage = serverAuth\n[alt]\n${san}\n`;
+    const cnfPath = resolve(certsDir, 'openssl.cnf');
+    writeFileSync(cnfPath, cnf);
+    execSync(`openssl req -x509 -nodes -newkey rsa:2048 -days 825 -keyout "${keyPath}" -out "${certPath}" -config "${cnfPath}"`, { stdio: 'inherit' });
+    console.log(`[pwvd] Certificado regenerado via openssl para: ${hosts.join(', ')}`);
+    return;
+  } catch {}
+
+  console.error('[pwvd] Nem mkcert nem openssl disponíveis. Instale um deles.');
   process.exit(1);
+}
+
+{
+  const lanIPs = getLanIPs().filter(i => i.score > -100).map(i => i.address);
+  const hosts = ['localhost', '127.0.0.1', ...lanIPs];
+  const needsRegen = !existsSync(TLS_CERT) || !existsSync(TLS_KEY) || !certCoversIPs(TLS_CERT, lanIPs);
+  if (needsRegen) {
+    console.log(`[pwvd] IP mudou ou certificado inexistente. Regenerando para: ${hosts.join(', ')}`);
+    regenerateCert(TLS_CERT, TLS_KEY, hosts);
+  } else {
+    console.log('[pwvd] Certificado TLS OK — IPs cobertos.');
+  }
 }
 
 // ---- Patch MediaMTX config with detected LAN IP ----
