@@ -1,0 +1,10 @@
+<resources>
+    <style name="Theme.PWVD" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#1f6feb</item>
+        <item name="colorPrimaryVariant">#388bfd</item>
+        <item name="colorOnPrimary">#ffffff</item>
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:navigationBarColor">#000000</item>
+        <item name="android:windowFullscreen">true</item>
+    </style>
+</resources>

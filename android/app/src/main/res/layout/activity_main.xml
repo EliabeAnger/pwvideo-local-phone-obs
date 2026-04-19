@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000">
+
+    <SurfaceView
+        android:id="@+id/surfaceView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <ScrollView
+        android:id="@+id/controls"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="#CC000000"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PWVD Cam"
+                android:textColor="#fff"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Servidor (IP)" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <EditText android:id="@+id/etServer"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:hint="192.168.2.140" android:inputType="text"
+                android:textColor="#e7e7ef" android:textColorHint="#444"
+                android:background="#1a1a24" android:padding="8dp" android:textSize="13sp"
+                android:layout_marginBottom="6dp" android:singleLine="true" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Nome do stream" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <EditText android:id="@+id/etStreamName"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:hint="cam-phone" android:inputType="text"
+                android:textColor="#e7e7ef" android:textColorHint="#444"
+                android:background="#1a1a24" android:padding="8dp" android:textSize="13sp"
+                android:layout_marginBottom="6dp" android:singleLine="true" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Resolução" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerRes"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="FPS" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <Spinner android:id="@+id/spinnerFps"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:background="#1a1a24" android:layout_marginBottom="6dp" />
+
+            <TextView android:id="@+id/tvBitrate"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Bitrate: 10 Mbps" android:textColor="#9a9ab0" android:textSize="11sp" />
+            <SeekBar android:id="@+id/seekBitrate"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:max="50" android:progress="10"
+                android:layout_marginBottom="12dp" />
+
+            <Button android:id="@+id/btnStream"
+                android:layout_width="match_parent" android:layout_height="48dp"
+                android:text="Iniciar transmissão" android:textColor="#fff"
+                android:backgroundTint="#1f6feb" android:layout_marginBottom="8dp" />
+
+            <Button android:id="@+id/btnCamera"
+                android:layout_width="match_parent" android:layout_height="40dp"
+                android:text="Trocar câmera" android:textColor="#fff"
+                android:backgroundTint="#25252e" android:layout_marginBottom="12dp" />
+
+            <TextView android:id="@+id/tvStatus"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="Pronto" android:textColor="#6ee17c"
+                android:textSize="12sp" android:fontFamily="monospace" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <ImageButton android:id="@+id/btnToggleControls"
+        android:layout_width="44dp" android:layout_height="44dp"
+        android:layout_gravity="start|top" android:layout_margin="8dp"
+        android:src="@android:drawable/ic_menu_manage"
+        android:background="@android:color/transparent"
+        android:contentDescription="Mostrar/ocultar controles" />
+
+</FrameLayout>

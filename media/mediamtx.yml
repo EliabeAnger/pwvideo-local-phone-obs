@@ -37,7 +37,7 @@ webrtcLocalTCPAddress: :8189
 # Do NOT auto-pick every NIC (Radmin VPN would hijack ICE). The Node control plane
 # rewrites this list at startup to the real LAN IP.
 webrtcIPsFromInterfaces: no
-webrtcAdditionalHosts: [192.168.2.140]
+webrtcAdditionalHosts: [192.168.2.104]
 webrtcICEServers2: []           # LAN-only: no STUN/TURN by default
 
 # ----- Paths -----

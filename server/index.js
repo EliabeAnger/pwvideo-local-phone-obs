@@ -129,6 +129,19 @@ app.post('/api/login', async (req) => {
   return { ok: false, error: 'Senha incorreta' };
 });
 
+// ---- APK download (phone downloads native app over LAN) ----
+app.get('/download/pwvd-cam.apk', async (req, reply) => {
+  const apkPath = resolve(ROOT, 'android', 'release', 'pwvd-cam.apk');
+  if (!existsSync(apkPath)) {
+    reply.code(404);
+    return { error: 'APK não encontrado. Compile o projeto Android primeiro.' };
+  }
+  const buf = readFileSync(apkPath);
+  reply.header('Content-Type', 'application/vnd.android.package-archive');
+  reply.header('Content-Disposition', 'attachment; filename="pwvd-cam.apk"');
+  return reply.send(buf);
+});
+
 // QR code as SVG (or PNG data URL) for any URL.
 app.get('/api/qr', async (req, reply) => {
   const text = req.query.text || `https://${getPrimaryLanIP()}:${HTTPS_PORT}/phone.html`;
