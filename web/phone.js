@@ -333,15 +333,25 @@ async function start() {
     await acquireWakeLock();
   } catch (e) {
     console.error(e);
-    setMsg(e.message || String(e), true);
-    await stop();
+    const errMsg = e.stack || e.message || String(e);
+    setMsg(errMsg, true);
+    const dbg = document.getElementById('dbg');
+    if (dbg) dbg.textContent += 'START-ERR: ' + errMsg + '\n';
+    autoReconnect = false;
+    // Don't call stop() here — it overwrites the error message.
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    preview.srcObject = null;
+    startBtn.disabled = false;
   }
 }
 
 // Creates a new WebRTC PeerConnection and WHIP session, re-using the existing camera stream.
 async function connect() {
+  const dbg = document.getElementById('dbg');
+  const log = (s) => { if (dbg) dbg.textContent += s + '\n'; };
   const track = stream?.getVideoTracks()[0];
   if (!track || track.readyState === 'ended') throw new Error('Câmera indisponível');
+  log('connect: track OK (' + track.readyState + ')');
 
   const fps = parseInt(fpsSel.value, 10);
   const bitrate = parseInt(brRange.value, 10) * 1000;
@@ -349,6 +359,7 @@ async function connect() {
   const preset = presetSel.value;
 
   pc = new RTCPeerConnection({ iceServers: [], bundlePolicy: 'max-bundle' });
+  log('connect: pc created');
 
   // Detect connection loss → auto-reconnect (keeps camera alive).
   pc.oniceconnectionstatechange = () => {
@@ -364,6 +375,7 @@ async function connect() {
   };
 
   const sender = pc.addTransceiver(track, { direction: 'sendonly' }).sender;
+  log('connect: transceiver added');
 
   // Tune encoding for maximum quality on LAN.
   const p = sender.getParameters();
@@ -381,13 +393,21 @@ async function connect() {
     priority: 'high',
     networkPriority: 'high',
   }];
-  await sender.setParameters(p);
+  try {
+    await sender.setParameters(p);
+    log('connect: params set');
+  } catch (e) {
+    log('connect: setParameters failed: ' + e.message);
+    // Safari may reject some params — continue anyway
+  }
 
   const offer = await pc.createOffer({ offerToReceiveAudio: false, offerToReceiveVideo: false });
+  log('connect: offer created');
   let sdp = preferCodec(offer.sdp, codec);
   sdp = sdp.replace(/^b=(AS|TIAS):.*\r?\n/gm, '');
   offer.sdp = sdp;
   await pc.setLocalDescription(offer);
+  log('connect: local desc set');
 
   await new Promise((resolve) => {
     if (pc.iceGatheringState === 'complete') return resolve();
@@ -395,8 +415,10 @@ async function connect() {
     pc.addEventListener('icegatheringstatechange', check);
     setTimeout(resolve, 1500);
   });
+  log('connect: ICE gathered');
 
   setMsg('Conectando ao servidor…');
+  log('connect: WHIP publish…');
   const answerSdp = await whipPublish(pc.localDescription);
   await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
 
